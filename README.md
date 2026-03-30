@@ -1,6 +1,6 @@
 # 新闻文本分类项目
 
-基于 BERT 的中文新闻文本分类系统，使用 PyTorch 实现。
+基于 BERT 的中文新闻文本分类系统，使用 PyTorch+Transformer 实现。
 
 ## 项目结构
 
