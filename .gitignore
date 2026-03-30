@@ -16,9 +16,7 @@ models/
 *.ckpt
 checkpoint.pth
 
-# 数据文件（如果很大）
-data/*.txt
-data/*.csv
+
 
 # 日志和输出
 *.log
