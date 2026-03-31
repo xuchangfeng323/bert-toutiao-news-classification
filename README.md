@@ -5,12 +5,12 @@
 ## 项目结构
 
 ```
-demo1/
+
 ├── config.py          # 配置类
 ├── model.py           # BERT 模型定义
 ├── trainer.py         # 训练器
 ├── utils.py           # 数据加载工具
-├── metrics.py         # 手写评估指标（Precision、Recall、F1）
+├── metrics.py         # 评估指标（Precision、Recall、F1）
 ├── run.py             # 训练入口
 ├── eval.py            # 预测入口
 └── data/              # 数据集
@@ -80,5 +80,9 @@ learning_rate = 1e-5    # 学习率
 max_length = 128        # 最大序列长度
 model = bert-base-chinese
 ```
+##安装依赖
 
+```python
+pip install -r requirements.txt
+```
 
