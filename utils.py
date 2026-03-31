@@ -39,8 +39,8 @@ from torch.utils.data import Dataset
 import pandas as pd
 from transformers import BertTokenizer
 import torch
-data_dir="../bert-base-chinese"
-tokenizer=BertTokenizer.from_pretrained(data_dir)
+from MyDataset import ToutiaoDataset
+
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
 def load_data(file_path,batch_size=16):
@@ -50,23 +50,20 @@ def load_data(file_path,batch_size=16):
     texts = df.iloc[:, 3]
     labels_clean = labels.astype(str).str.strip()
     labels_new = labels_clean.map(lambda x: int(label2id[x])).values
-    encodings = tokenizer(texts.tolist(), truncation=True, padding='max_length', max_length=128, return_tensors="pt")
+   
     labels_list = labels_new.tolist()
-    encodings_list = [
-        {key: value[i] for key, value in encodings.items()}
-        for i in range(len(texts))
-    ]
-    train_data, test_data, train_labels, test_labels = train_test_split(encodings_list, labels_list, test_size=0.2, random_state=42)
+    
+    train_data, test_data, train_labels, test_labels = train_test_split(texts.tolist(), labels_list, test_size=0.2, random_state=42)
     train_dataset = ToutiaoDataset(train_data, train_labels)
     test_dataset = ToutiaoDataset(test_data, test_labels)
     
-    train_dataLoader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    test_dataLoader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+    train_dataLoader = train_dataset.get_data_loader(batch_size=batch_size)
+    test_dataLoader = test_dataset.get_data_loader(batch_size=batch_size)
     return train_dataLoader, test_dataLoader
 
 
 if __name__ == "__main__":    
-    train_dataLoader, test_dataLoader = load_data("toutiao_cat_data.txt")
+    train_dataLoader, test_dataLoader = load_data("./data/toutiao_cat_data.txt")
     for batch in train_dataLoader:
         print(batch)
         break

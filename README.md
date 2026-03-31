@@ -80,7 +80,7 @@ learning_rate = 1e-5    # 学习率
 max_length = 128        # 最大序列长度
 model = bert-base-chinese
 ```
-##安装依赖
+## 安装依赖
 
 ```python
 pip install -r requirements.txt

@@ -117,7 +117,7 @@ class trainer:
             }
             torch.save(best_checkpoint, f"models/best_model.pth")
         
-        # 保存当前检查点
+        
         checkpoint = {
             'epoch': epoch,
             'model_state_dict': self.model.state_dict(),
@@ -125,7 +125,7 @@ class trainer:
             'loss': loss.item(),
             'accuracy': eval_accuracy,
         }
-        torch.save(checkpoint, 'checkpoint.pth')
+        torch.save(checkpoint, f'/checkpoints/checkpoint_{epoch}.pth')
     def predict(self, text, model_path=None):
         if model_path is not None:
             self.load_model(model_path)
