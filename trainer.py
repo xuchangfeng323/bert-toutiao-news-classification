@@ -22,7 +22,7 @@ class trainer:
         self.best_accuracy = 0.0
         
     def train(self):
-        self.model.train()
+        
         swanlab.init(
             project="demo1",  
             name="bert",                
@@ -34,6 +34,7 @@ class trainer:
             }
         )
         for epoch in range(self.num_epochs):
+            self.model.train()
             total_train_loss = 0
             progress_bar = tqdm(self.traindataLoader, desc=f"Epoch {epoch + 1}/{self.num_epochs} [Train]", position=0, leave=True)
             for step, batch in enumerate(progress_bar):
@@ -59,11 +60,6 @@ class trainer:
             }, step=epoch)
             self.eval(epoch)
             
-        
-        
-    
-   
-    
     def load_model(self, path):
         
         checkpoint = torch.load(path, map_location=self.device, weights_only=True)
@@ -87,7 +83,7 @@ class trainer:
                 batch = {k: v.to(self.device) for k, v in batch.items()}
                 labels = batch['labels']
                 logits = self.model(batch['input_ids'], batch['attention_mask'])
-                loss_fn = torch.nn.CrossEntropyLoss()
+                loss_fn = self.loss_fn
                 loss = loss_fn(logits, labels)
                 total_eval_loss += loss.item()
                 predictions = torch.argmax(logits, dim=-1)

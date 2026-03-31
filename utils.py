@@ -41,26 +41,7 @@ from transformers import BertTokenizer
 import torch
 data_dir="../bert-base-chinese"
 tokenizer=BertTokenizer.from_pretrained(data_dir)
-class ToutiaoDataset(Dataset):
-    def __init__(self, encodings, labels):
-        
-        self.encodings = encodings
-        self.labels = labels
-        
-        
-
-    def __len__(self):
-        return len(self.labels)
-    def __getitem__(self, idx):
-        encoding = self.encodings[idx]
-        label = self.labels[idx]
-        return {
-            'input_ids': encoding['input_ids'],
-            'attention_mask': encoding['attention_mask'],
-            'labels': torch.tensor(label)
-        }
 from sklearn.model_selection import train_test_split
-from transformers import DataCollatorWithPadding
 from torch.utils.data import DataLoader
 def load_data(file_path,batch_size=16):
     df = pd.read_csv(file_path, delimiter='_!_', header=None,engine="python")
