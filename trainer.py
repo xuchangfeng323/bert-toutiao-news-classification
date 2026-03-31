@@ -15,7 +15,7 @@ class trainer:
         self.device=config.device
         self.num_epochs=config.num_epochs
         self.tokenizer=config.tokenizer
-        
+        self.config=config
         self.loss_fn = config.loss_fn
         self.model.to(self.device)
         self.metrics = Metrics(num_classes=15)
@@ -101,7 +101,7 @@ class trainer:
         avg_eval_loss = total_eval_loss / len(self.testdataloader)
         eval_accuracy = eval_correct / total_samples  
         print(f"Eval Accuracy: {eval_accuracy:.4f}")
-        self.save_model(f"models/model.pth")
+        
         swanlab.log({
             "eval/loss": avg_eval_loss,
             "eval/accuracy": eval_accuracy
@@ -112,7 +112,7 @@ class trainer:
         if eval_accuracy > self.best_accuracy:
             self.best_accuracy = eval_accuracy
             
-            # 保存最佳模型（只保存权重）
+            
             best_checkpoint = {
                 'epoch': epoch,
                 'model_state_dict': self.model.state_dict(),
