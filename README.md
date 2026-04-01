@@ -17,7 +17,7 @@
     └── toutiao_cat_data.txt
 ```
 ## 数据集
-
+数据集来源：https://github.com/aceimnorstuvwxz/toutiao-text-classfication-dataset
 使用今日头条新闻分类数据集，包含 15 个类别：
 
 | 类别ID | 类别名称 |

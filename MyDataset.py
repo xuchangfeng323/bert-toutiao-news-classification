@@ -11,8 +11,6 @@ class ToutiaoDataset(Dataset):
         self.labels = labels
         self.tokenizer = tokenizer
         self.max_length = max_length
-        
-        
 
     def __len__(self):
         return len(self.labels)

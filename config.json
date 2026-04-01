@@ -1,0 +1,9 @@
+{
+    "num_epochs": 1,
+    "batch_size": 16,
+    "lr": 1e-6,
+    "weight_decay": 0.01,
+    "device": "cuda",
+    "model_dir": "../bert-base-chinese",
+    "loss_fn": "cross_entropy"
+}

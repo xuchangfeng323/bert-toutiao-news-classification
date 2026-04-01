@@ -53,13 +53,15 @@ def load_data(file_path,batch_size=16):
    
     labels_list = labels_new.tolist()
     
-    train_data, test_data, train_labels, test_labels = train_test_split(texts.tolist(), labels_list, test_size=0.2, random_state=42)
+    train_data, testanddev_data, train_labels, testanddev_labels = train_test_split(texts.tolist(), labels_list, test_size=0.3, random_state=42, stratify=labels_list)
+    test_data, dev_data, test_labels, dev_labels = train_test_split(testanddev_data, testanddev_labels, test_size=0.5, random_state=42, stratify=testanddev_labels)
     train_dataset = ToutiaoDataset(train_data, train_labels)
     test_dataset = ToutiaoDataset(test_data, test_labels)
-    
+    dev_dataset = ToutiaoDataset(dev_data, dev_labels)
     train_dataLoader = train_dataset.get_data_loader(batch_size=batch_size)
     test_dataLoader = test_dataset.get_data_loader(batch_size=batch_size)
-    return train_dataLoader, test_dataLoader
+    dev_dataLoader = dev_dataset.get_data_loader(batch_size=batch_size)
+    return train_dataLoader, test_dataLoader, dev_dataLoader
 
 
 if __name__ == "__main__":    

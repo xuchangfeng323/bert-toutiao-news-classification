@@ -7,8 +7,6 @@ import torch
 from transformers import BertTokenizer
 class trainer:
     def __init__(self,config):
-        self.traindataLoader=config.train_dataLoader
-        self.testdataloader=config.test_dataLoader
         self.model=config.model
         self.optimizer=config.optimizer
         self.scheduler=config.scheduler
@@ -21,7 +19,7 @@ class trainer:
         self.metrics = Metrics(num_classes=15)
         self.best_accuracy = 0.0
         
-    def train(self):
+    def train(self,traindataLoader, devdataLoader, testdataLoader):
         
         swanlab.init(
             project="demo1",  
@@ -36,7 +34,7 @@ class trainer:
         for epoch in range(self.num_epochs):
             self.model.train()
             total_train_loss = 0
-            progress_bar = tqdm(self.traindataLoader, desc=f"Epoch {epoch + 1}/{self.num_epochs} [Train]", position=0, leave=True)
+            progress_bar = tqdm(traindataLoader, desc=f"Epoch {epoch + 1}/{self.num_epochs} [Train]", position=0, leave=True)
             for step, batch in enumerate(progress_bar):
                 batch = {k: v.to(self.device) for k, v in batch.items()}
                 self.optimizer.zero_grad()
@@ -58,7 +56,9 @@ class trainer:
             swanlab.log({
                 "train/loss_epoch": avg_train_loss
             }, step=epoch)
-            self.eval(epoch)
+            self.eval(epoch, devdataLoader)
+        self.test(testdataLoader)
+        swanlab.finish()
             
     def load_model(self, path):
         
@@ -71,13 +71,13 @@ class trainer:
         
         
         
-    def eval(self,epoch):
+    def eval(self,epoch, devdataLoader):
         self.model.eval()
         
         total_eval_loss = 0
         eval_correct = 0
         total_samples = 0
-        progress_bar = tqdm(self.testdataloader, desc="Evaluation", position=0, leave=True)
+        progress_bar = tqdm(devdataLoader, desc="Evaluation", position=0, leave=True)
         with torch.no_grad():
             for batch in progress_bar:
                 batch = {k: v.to(self.device) for k, v in batch.items()}
@@ -91,20 +91,20 @@ class trainer:
                 total_samples += labels.size(0)
                 if epoch==self.num_epochs-1:
                     self.metrics.add(predictions, labels)
-        if epoch==self.num_epochs-1:
-            results = self.metrics.get_results()
-            print(results)
-        avg_eval_loss = total_eval_loss / len(self.testdataloader)
+        
+        results = self.metrics.get_results()
+        print(results)
+        self.metrics.reset()
+        avg_eval_loss = total_eval_loss / len(devdataLoader)
         eval_accuracy = eval_correct / total_samples  
         print(f"Eval Accuracy: {eval_accuracy:.4f}")
         
         swanlab.log({
             "eval/loss": avg_eval_loss,
-            "eval/accuracy": eval_accuracy
+            "eval/accuracy": eval_accuracy,
+            "eval/results": results
         })
-        
-        
-        swanlab.finish()
+
         if eval_accuracy > self.best_accuracy:
             self.best_accuracy = eval_accuracy
             
@@ -126,6 +126,39 @@ class trainer:
             'accuracy': eval_accuracy,
         }
         torch.save(checkpoint, f'/checkpoints/checkpoint_{epoch}.pth')
+    def test(self, testdataLoader):
+        self.model.eval()
+        total_test_loss = 0
+        test_correct = 0
+        total_samples = 0
+        progress_bar = tqdm(testdataLoader, desc="Testing", position=0, leave=True)
+        with torch.no_grad():
+            for batch in progress_bar:
+                batch = {k: v.to(self.device) for k, v in batch.items()}
+                labels = batch['labels']
+                logits = self.model(batch['input_ids'], batch['attention_mask'])
+                loss_fn = self.loss_fn
+                loss = loss_fn(logits, labels)
+                total_test_loss += loss.item()
+                predictions = torch.argmax(logits, dim=-1)
+                test_correct += (predictions == labels).sum().item()
+                total_samples += labels.size(0)
+                self.metrics.add(predictions, labels)
+        results = self.metrics.get_results()
+        swanlab.log({
+            "test/results": results
+        })
+        print("Test Results:")
+        print(results)
+        self.metrics.reset()
+        avg_test_loss = total_test_loss / len(testdataLoader)
+        test_accuracy = test_correct / total_samples  
+        print(f"Test Accuracy: {test_accuracy:.4f}")
+        swanlab.log({
+            "test/loss": avg_test_loss,
+            "test/accuracy": test_accuracy
+        })
+        
     def predict(self, text, model_path=None):
         if model_path is not None:
             self.load_model(model_path)
