@@ -1,5 +1,15 @@
-
+import os
 from swanlab import config
+from torch.utils.data import Dataset
+import pandas as pd
+from transformers import BertTokenizer
+import torch
+from MyDataset import ToutiaoDataset
+from ModelConfig import ModelConfig
+import pandas as pd
+import torch
+from sklearn.model_selection import train_test_split
+
 label2id = {
     "100": 0,
     "101": 1,
@@ -36,14 +46,6 @@ id2label = {
     13: "115",
     14: "116"
 }
-from torch.utils.data import Dataset
-import pandas as pd
-from transformers import BertTokenizer
-import torch
-from MyDataset import ToutiaoDataset
-from ModelConfig import ModelConfig
-
-from sklearn.model_selection import train_test_split
 
 def load_data(config):
     batch_size=config.batch_size
@@ -66,8 +68,7 @@ def load_data(config):
     test_dataLoader = test_dataset.get_data_loader(batch_size=config.batch_size)
     return train_dataLoader, dev_dataLoader, test_dataLoader    
 
-import pandas as pd
-import torch
+
 class Metrics:
     def __init__(self, num_classes):
         self.num_classes = num_classes
@@ -169,6 +170,60 @@ class Metrics:
         f1=self.f1_score()
         df.loc['micro_avg'] = [p,r,f1]
         return df
+class EarlyStop():
+    def __init__(self,config):
+        self.config=config
+        self.mintor = config.monitor
+        self.delta=config.delta
+        self.best_score = None
+        self.counter = 0
+        self.patience = config.patience
+        self.early_stop = False
+    def __call__(self, epoch,loss,acc, model,optimizer,scheduler,):
+        if self.mintor == 'val_acc':
+            if self.best_score is None :
+                self.best_score = acc
+                
+                self.save_checkpoint(model, optimizer, scheduler, epoch,loss)
+            
+
+            if self.best_score - acc < self.delta:
+                self.counter += 1
+                if self.counter >= self.patience:
+                    self.early_stop = True
+            else:
+                self.best_score = acc
+                self.counter = 0
+                self.save_checkpoint(model, optimizer, scheduler, epoch,loss)
+        elif self.mintor == 'val_loss':
+            if self.best_score is None:
+                self.best_score = loss
+                self.save_checkpoint(model, optimizer, scheduler, epoch,loss)
+            if self.best_score - loss > self.delta:
+                self.counter += 1
+                if self.counter >= self.patience:
+                    self.early_stop = True
+            else:
+                self.best_score = loss
+                self.counter = 0
+                self.save_checkpoint(model, optimizer, scheduler, epoch,loss)
+        
+    def save_checkpoint(self, model, optimizer, scheduler, epoch, dev_metrics):
+        checkpoint_name = f"checkpoint_epoch_{epoch + 1}.pt"
+        checkpoint_path = os.path.join(self.experiment_dir, checkpoint_name)
+        checkpoint = {
+            'epoch': epoch,
+            'model': model.state_dict(),
+            'optimizer': optimizer.state_dict(),
+            'scheduler': scheduler.state_dict(),
+            
+        }
+        torch.save(checkpoint, checkpoint_path)
+        print(f"保存 epoch {epoch + 1} 的 checkpoint: {checkpoint_path}")
+        self.best_model_path = checkpoint_path
+        print(f"更新最佳模型: {checkpoint_path} (监控指标 '{self.monitor}' = {dev_metrics[self.monitor]:.6f})")
+    
+        
 
 if __name__ == '__main__': 
     metrics1 = Metrics(num_classes=3)

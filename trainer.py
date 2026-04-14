@@ -1,10 +1,9 @@
 from utils import Metrics
-from torch import device
-from sched import scheduler
+from utils import EarlyStop
 import swanlab
 from tqdm import tqdm
 import torch
-from transformers import BertTokenizer
+
 class trainer:
     def __init__(self,config):
        
@@ -12,12 +11,11 @@ class trainer:
         self.scheduler=None
         self.device=config.device
         self.num_epochs=config.num_epochs
-       
         self.config=config
         self.loss_fn = config.loss_fn
-       
         self.metrics = Metrics(num_classes=15)
         self.best_accuracy = 0.0
+        self.early_stop = EarlyStop(config)
         
     def train(self,traindataLoader, devdataLoader, testdataLoader, model,optimizer, scheduler):
         self.optimizer=optimizer
@@ -46,7 +44,6 @@ class trainer:
                 loss=self.loss_fn(logits, labels)
                 loss.backward()
                 self.optimizer.step()
-                
                 total_train_loss += loss.item()
                 progress_bar.set_postfix({"Loss": loss.item()})
                 if step % 50 == 0:
@@ -58,20 +55,16 @@ class trainer:
             swanlab.log({
                 "train/loss_epoch": avg_train_loss
             }, step=epoch)
-            avg_eval_loss = self.eval(epoch, devdataLoader)
+            avg_eval_loss ,eval_accuracy = self.eval(epoch, devdataLoader)
             if self.scheduler is not None:
                 self.scheduler.step(avg_eval_loss)
+            if self.early_stop(epoch,avg_eval_loss,eval_accuracy, model,optimizer,scheduler):
+                break
+
         self.test(testdataLoader)
         swanlab.finish()
             
-    def load_model(self, path):
-        
-        checkpoint = torch.load(path, map_location=self.device, weights_only=True)
-        if 'model_state_dict' in checkpoint:
-            self.model.load_state_dict(checkpoint['model_state_dict'])
-        else:
-           
-            self.model.load_state_dict(checkpoint)
+    
         
     def eval(self,epoch, devdataLoader):
         self.model.eval()
@@ -81,10 +74,11 @@ class trainer:
         total_samples = 0
         progress_bar = tqdm(devdataLoader, desc="Evaluation", position=0, leave=True)
         with torch.no_grad():
-            for batch in progress_bar:
-                batch = {k: v.to(self.device) for k, v in batch.items()}
-                labels = batch['labels']
-                logits = self.model(batch['input_ids'], batch['attention_mask'])
+            for input_ids, attention_mask, labels in progress_bar:
+                input_ids = input_ids.to(self.device)
+                attention_mask = attention_mask.to(self.device)
+                labels = labels.to(self.device)
+                logits = self.model(input_ids, attention_mask)
                 loss_fn = self.loss_fn
                 loss = loss_fn(logits, labels)
                 total_eval_loss += loss.item()
@@ -107,28 +101,8 @@ class trainer:
             "eval/results": results
         })
 
-        if eval_accuracy > self.best_accuracy:
-            self.best_accuracy = eval_accuracy
-            
-            
-            best_checkpoint = {
-                'epoch': epoch,
-                'model_state_dict': self.model.state_dict(),
-                'optimizer_state_dict': self.optimizer.state_dict(),
-                'accuracy': eval_accuracy,
-            }
-            torch.save(best_checkpoint, f"models/best_model.pth")
         
-        
-        checkpoint = {
-            'epoch': epoch,
-            'model_state_dict': self.model.state_dict(),
-            'optimizer_state_dict': self.optimizer.state_dict(),
-            'loss': loss.item(),
-            'accuracy': eval_accuracy,
-        }
-        torch.save(checkpoint, f'/checkpoints/checkpoint_{epoch}.pth')
-        return avg_eval_loss
+        return avg_eval_loss,eval_accuracy
     def test(self, testdataLoader):
         self.model.eval()
         total_test_loss = 0

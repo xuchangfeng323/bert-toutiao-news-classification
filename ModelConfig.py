@@ -1,12 +1,8 @@
 import json
 import os
-
 from transformers import get_scheduler
-
 import torch
 from transformers import BertTokenizer
-
-
 class ModelConfig:
     def __init__(self, config_path="config.json", data_path=None, num_epochs=None, 
                  batch_size=None, lr=None, weight_decay=None, device=None, 
@@ -33,6 +29,11 @@ class ModelConfig:
         self.model_dir = default_config.get("model_dir", "../bert-base-chinese")
         if self.loss_fn_name == "cross_entropy":
             self.loss_fn = torch.nn.CrossEntropyLoss()
+        self.patience = default_config.get("patience", 5)
+        self.monitor = default_config.get("monitor", "val_acc")
+        self.delta = default_config.get("delta", 0.01)
+        self.model_save_path = default_config.get("model_save_path", "./checkpoints")
+        
     def _load_json_config(self, config_path):
        
         if os.path.exists(config_path):
@@ -49,5 +50,8 @@ class ModelConfig:
             "weight_decay": self.weight_decay,
             "device": self.device,
             "model_dir": self.model_dir,
-            "loss_fn": self.loss_fn_name
+            "loss_fn": self.loss_fn_name,
+            "patience": self.patience,
+            "monitor": self.monitor,
+            "delta": self.delta
         }

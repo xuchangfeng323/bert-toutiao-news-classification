@@ -10,7 +10,11 @@
     "embedding_dim": 768,
     "class_num": 15,
     "data_path": "./data/toutiao_cat_data.txt",
-    "max_length": 128
+    "max_length": 128,
+    "patience":3,
+    "monitor": "val_acc",
+    "delta":0.01,
+    "model_save_path": "./checkpoints"
     
     
     
