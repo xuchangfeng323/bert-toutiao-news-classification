@@ -1,5 +1,5 @@
 {
-    "num_epochs": 1,
+    "num_epochs": 10,
     "batch_size": 16,
     "lr": 1e-6,
     "weight_decay": 0.01,
@@ -14,7 +14,8 @@
     "patience":3,
     "monitor": "val_acc",
     "delta":0.01,
-    "model_save_path": "./checkpoints"
+    "model_save_path": "./checkpoints",
+    "label_mapping_path": "./data/label_mapping.json"
     
     
     

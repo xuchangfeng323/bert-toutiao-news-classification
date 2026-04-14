@@ -5,10 +5,11 @@ import torch
 from torch.utils.data import DataLoader
 
 class ToutiaoDataset(Dataset):
-    def __init__(self, texts, labels, tokenizer=BertTokenizer.from_pretrained('../bert-base-chinese'), max_length=128):
-        
+    def __init__(self, texts, labels, tokenizer=None, max_length=128):
         self.texts = texts
         self.labels = labels
+        if tokenizer is None:
+            tokenizer = BertTokenizer.from_pretrained('../bert-base-chinese')
         self.tokenizer = tokenizer
         self.max_length = max_length
     def __len__(self):

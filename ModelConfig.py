@@ -33,6 +33,7 @@ class ModelConfig:
         self.monitor = default_config.get("monitor", "val_acc")
         self.delta = default_config.get("delta", 0.01)
         self.model_save_path = default_config.get("model_save_path", "./checkpoints")
+        self.label_mapping_path=default_config.get("label_mapping_path", {})
         
     def _load_json_config(self, config_path):
        
@@ -53,5 +54,8 @@ class ModelConfig:
             "loss_fn": self.loss_fn_name,
             "patience": self.patience,
             "monitor": self.monitor,
-            "delta": self.delta
+            "delta": self.delta,
+            "model_save_path": self.model_save_path,
+            "label_mapping_path": self.label_mapping_path,
+
         }

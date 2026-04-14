@@ -36,11 +36,13 @@ class trainer:
             self.model.train()
             total_train_loss = 0
             progress_bar = tqdm(traindataLoader, desc=f"Epoch {epoch + 1}/{self.num_epochs} [Train]", position=0, leave=True)
-            for step, batch in enumerate(progress_bar):
-                batch = {k: v.to(self.device) for k, v in batch.items()}
+            for step, (input_ids, attention_mask, labels) in enumerate(progress_bar):
+                
                 self.optimizer.zero_grad()
-                labels = batch['labels']
-                logits = self.model(batch['input_ids'], batch['attention_mask'])
+                input_ids = input_ids.to(self.device)
+                attention_mask = attention_mask.to(self.device)
+                labels = labels.to(self.device)
+                logits = self.model(input_ids, attention_mask)
                 loss=self.loss_fn(logits, labels)
                 loss.backward()
                 self.optimizer.step()
@@ -110,10 +112,11 @@ class trainer:
         total_samples = 0
         progress_bar = tqdm(testdataLoader, desc="Testing", position=0, leave=True)
         with torch.no_grad():
-            for batch in progress_bar:
-                batch = {k: v.to(self.device) for k, v in batch.items()}
-                labels = batch['labels']
-                logits = self.model(batch['input_ids'], batch['attention_mask'])
+            for  input_ids, attention_mask, labels in progress_bar:
+                input_ids = input_ids.to(self.device)
+                attention_mask = attention_mask.to(self.device)
+                labels = labels.to(self.device)
+                logits = self.model(input_ids, attention_mask)
                 loss_fn = self.loss_fn
                 loss = loss_fn(logits, labels)
                 total_test_loss += loss.item()
@@ -136,13 +139,14 @@ class trainer:
             "test/accuracy": test_accuracy
         })
         
-    def predict(self, text, model_path=None):
+    def predict(self, text,tokenizer,model_path=None):
         if model_path is not None:
             self.load_model(model_path)
-
+        if model_path is None:
+            return 
         self.model.eval()
         with torch.no_grad():
-            inputs = self.tokenizer(text, return_tensors="pt", padding=True, truncation=True, max_length=512)
+            inputs = tokenizer(text, return_tensors="pt", padding=True, truncation=True, max_length=self.config.max_length)
             inputs = {k: v.to(self.device) for k, v in inputs.items()}
             logits = self.model(inputs['input_ids'], inputs['attention_mask'])
             predictions = torch.argmax(logits, dim=-1)

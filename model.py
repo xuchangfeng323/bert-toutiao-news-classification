@@ -23,5 +23,5 @@ class Bert4TextClassification(nn.Module):
         lr_scheduler = ReduceLROnPlateau(optimizer, patience=2, verbose=1, factor=0.1)
         return optimizer, lr_scheduler
 if __name__ == "__main__":
-    model = Bert()
+    model = Bert4TextClassification()
     print(model)

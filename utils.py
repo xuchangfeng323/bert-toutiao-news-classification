@@ -9,46 +9,18 @@ from ModelConfig import ModelConfig
 import pandas as pd
 import torch
 from sklearn.model_selection import train_test_split
+import json
 
-label2id = {
-    "100": 0,
-    "101": 1,
-    "102": 2,
-    "103": 3,
-    "104": 4,
-    "106": 5,
-    "107": 6,
-    "108": 7,
-    "109": 8,
-    "110": 9,
-    "112": 10,
-    "113": 11,
-    "114": 12,
-    "115": 13,
-    "116": 14
-    
-}
-
-id2label = {
-    0: "100",
-    1: "101",
-    2: "102",
-    3: "103",
-    4: "104",
-    5: "106",
-    6: "107",
-    7: "108",
-    8: "109",
-    9: "110",
-    10: "112",
-    11: "113",
-    12: "114",
-    13: "115",
-    14: "116"
-}
 
 def load_data(config):
-    batch_size=config.batch_size
+    
+    if config.label_mapping_path is not None:
+        with open(config.label_mapping_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        label2id = data.get("label2id", {})
+        id2label = data.get("id2label", {})
+        
+    
     df = pd.read_csv(config.data_dir, delimiter='_!_', header=None,engine="python")
     labels = df.iloc[:, 1]
    
@@ -57,12 +29,12 @@ def load_data(config):
     labels_new = labels_clean.map(lambda x: int(label2id[x])).values
    
     labels_list = labels_new.tolist()
-    
+    tokenizer=BertTokenizer.from_pretrained(config.model_dir)
     train_data, testanddev_data, train_labels, testanddev_labels = train_test_split(texts.tolist(), labels_list, test_size=0.3, random_state=42, stratify=labels_list)
     test_data, dev_data, test_labels, dev_labels = train_test_split(testanddev_data, testanddev_labels, test_size=0.5, random_state=42, stratify=testanddev_labels)
-    train_dataset = ToutiaoDataset(train_data, train_labels,config.max_length)
-    test_dataset = ToutiaoDataset(test_data, test_labels,config.max_length)
-    dev_dataset = ToutiaoDataset(dev_data, dev_labels,config.max_length)
+    train_dataset = ToutiaoDataset(train_data, train_labels,tokenizer,config.max_length)
+    test_dataset = ToutiaoDataset(test_data, test_labels,tokenizer,config.max_length)
+    dev_dataset = ToutiaoDataset(dev_data, dev_labels,tokenizer,config.max_length)
     train_dataLoader = train_dataset.get_data_loader(batch_size=config.batch_size)
     dev_dataLoader = dev_dataset.get_data_loader(batch_size=config.batch_size)
     test_dataLoader = test_dataset.get_data_loader(batch_size=config.batch_size)
