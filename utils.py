@@ -21,7 +21,7 @@ def load_data(config):
         id2label = data.get("id2label", {})
         
     
-    df = pd.read_csv(config.data_dir, delimiter='_!_', header=None,engine="python")
+    df = pd.read_csv(config.data_path, delimiter='_!_', header=None,engine="python")
     labels = df.iloc[:, 1]
    
     texts = df.iloc[:, 3]
@@ -159,7 +159,7 @@ class EarlyStop():
                 self.save_checkpoint(model, optimizer, scheduler, epoch,loss)
             
 
-            if self.best_score - acc < self.delta:
+            if acc-self.best_score  < self.delta:
                 self.counter += 1
                 if self.counter >= self.patience:
                     self.early_stop = True
@@ -182,7 +182,7 @@ class EarlyStop():
         
     def save_checkpoint(self, model, optimizer, scheduler, epoch, dev_metrics):
         checkpoint_name = f"checkpoint_epoch_{epoch + 1}.pt"
-        checkpoint_path = os.path.join(self.experiment_dir, checkpoint_name)
+        checkpoint_path = os.path.join(self.config.model_save_path, checkpoint_name)
         checkpoint = {
             'epoch': epoch,
             'model': model.state_dict(),
@@ -193,7 +193,7 @@ class EarlyStop():
         torch.save(checkpoint, checkpoint_path)
         print(f"保存 epoch {epoch + 1} 的 checkpoint: {checkpoint_path}")
         self.best_model_path = checkpoint_path
-        print(f"更新最佳模型: {checkpoint_path} (监控指标 '{self.monitor}' = {dev_metrics[self.monitor]:.6f})")
+        print(f"更新最佳模型: {checkpoint_path} (监控指标 '{self.monitor}' = {dev_metrics:.6f})")
     
         
 

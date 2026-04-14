@@ -22,6 +22,3 @@ class Bert4TextClassification(nn.Module):
         optimizer = torch.optim.AdamW(self.parameters(), lr=self.learning_rate, weight_decay=self.weight_decay)
         lr_scheduler = ReduceLROnPlateau(optimizer, patience=2, verbose=1, factor=0.1)
         return optimizer, lr_scheduler
-if __name__ == "__main__":
-    model = Bert4TextClassification()
-    print(model)

@@ -1,6 +1,5 @@
 import json
 import os
-from transformers import get_scheduler
 import torch
 from transformers import BertTokenizer
 class ModelConfig:
@@ -11,7 +10,7 @@ class ModelConfig:
         default_config = self._load_json_config(config_path)
         self.num_epochs = num_epochs if num_epochs is not None else default_config.get("num_epochs", 1)
         self.batch_size = batch_size if batch_size is not None else default_config.get("batch_size", 16)
-        self.learning_rate = lr if lr is not None else default_config.get("learning_rate", 1e-6)
+        self.learning_rate = lr if lr is not None else default_config.get("lr", 1e-6)
         self.weight_decay = weight_decay if weight_decay is not None else default_config.get("weight_decay", 1e-2)
         device_str = device if device is not None else default_config.get("device", "cuda")
         self.embedding_dim = default_config.get("embedding_dim", 768)
@@ -25,7 +24,7 @@ class ModelConfig:
             self.device = device_str
         self.loss_fn=None
         self.loss_fn_name = loss_fn if loss_fn is not None else default_config.get("loss_fn", "cross_entropy") 
-        self.data_dir = default_config.get("data_dir", "data/toutiao_cat_data.txt")
+        self.data_path = data_path if data_path is not None else default_config.get("data_path", "data/toutiao_cat_data.txt")
         self.model_dir = default_config.get("model_dir", "../bert-base-chinese")
         if self.loss_fn_name == "cross_entropy":
             self.loss_fn = torch.nn.CrossEntropyLoss()
