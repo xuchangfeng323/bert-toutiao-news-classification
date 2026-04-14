@@ -5,5 +5,13 @@
     "weight_decay": 0.01,
     "device": "cuda",
     "model_dir": "../bert-base-chinese",
-    "loss_fn": "cross_entropy"
+    "loss_fn": "cross_entropy",
+    "dropout_rate": 0.1,
+    "embedding_dim": 768,
+    "class_num": 15,
+    "data_path": "./data/toutiao_cat_data.txt",
+    "max_length": 128
+    
+    
+    
 }

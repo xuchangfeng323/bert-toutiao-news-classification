@@ -1,7 +1,9 @@
 from trainer import trainer 
-
-from config import Config
+from model import Bert
+from ModelConfig import ModelConfig
 if __name__ == "__main__":
-    config=Config("data/toutiao_cat_data.txt")
+    config=ModelConfig("config.json")
     trainer=trainer(config)
-    trainer.predict("腾讯股价再创新高市值破3万亿，还有哪些“神股”只涨不跌？",model_path="models/model.pth")
+    model=Bert(config.embedding_dim, config.class_num, model_dir=config.model_dir)
+    optimizer, scheduler = model.get_optimizer()
+    

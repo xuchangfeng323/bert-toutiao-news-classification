@@ -1,4 +1,4 @@
-from metrics import Metrics
+from utils import Metrics
 from torch import device
 from sched import scheduler
 import swanlab
@@ -7,26 +7,29 @@ import torch
 from transformers import BertTokenizer
 class trainer:
     def __init__(self,config):
-        self.model=config.model
-        self.optimizer=config.optimizer
-        self.scheduler=config.scheduler
+       
+        self.optimizer=None
+        self.scheduler=None
         self.device=config.device
         self.num_epochs=config.num_epochs
-        self.tokenizer=config.tokenizer
+       
         self.config=config
         self.loss_fn = config.loss_fn
-        self.model.to(self.device)
+       
         self.metrics = Metrics(num_classes=15)
         self.best_accuracy = 0.0
         
-    def train(self,traindataLoader, devdataLoader, testdataLoader):
-        
+    def train(self,traindataLoader, devdataLoader, testdataLoader, model,optimizer, scheduler):
+        self.optimizer=optimizer
+        self.model=model
+        model.to(self.device)
+        self.scheduler=scheduler
         swanlab.init(
             project="demo1",  
             name="bert",                
             config={
                 "num_epochs": self.config.num_epochs,
-                "learning_rate": self.config.lr,
+                "learning_rate": self.config.learning_rate,
                 "batch_size": self.config.batch_size,
                 "model": "bert-base-chinese"
             }
@@ -43,20 +46,21 @@ class trainer:
                 loss=self.loss_fn(logits, labels)
                 loss.backward()
                 self.optimizer.step()
-                if self.scheduler is not None:
-                    self.scheduler.step()
+                
                 total_train_loss += loss.item()
                 progress_bar.set_postfix({"Loss": loss.item()})
                 if step % 50 == 0:
                     swanlab.log({
                         "train/loss_step": loss.item(),
                         "train/learning_rate": self.optimizer.param_groups[0]['lr']
-                    }, step=epoch * len(self.traindataLoader) + step)
-            avg_train_loss = total_train_loss / len(self.traindataLoader)
+                    }, step=epoch * len(traindataLoader) + step)
+            avg_train_loss = total_train_loss / len(traindataLoader)
             swanlab.log({
                 "train/loss_epoch": avg_train_loss
             }, step=epoch)
-            self.eval(epoch, devdataLoader)
+            avg_eval_loss = self.eval(epoch, devdataLoader)
+            if self.scheduler is not None:
+                self.scheduler.step(avg_eval_loss)
         self.test(testdataLoader)
         swanlab.finish()
             
@@ -68,8 +72,6 @@ class trainer:
         else:
            
             self.model.load_state_dict(checkpoint)
-        
-        
         
     def eval(self,epoch, devdataLoader):
         self.model.eval()
@@ -126,6 +128,7 @@ class trainer:
             'accuracy': eval_accuracy,
         }
         torch.save(checkpoint, f'/checkpoints/checkpoint_{epoch}.pth')
+        return avg_eval_loss
     def test(self, testdataLoader):
         self.model.eval()
         total_test_loss = 0
