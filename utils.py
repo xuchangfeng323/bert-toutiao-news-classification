@@ -145,14 +145,14 @@ class Metrics:
 class EarlyStop():
     def __init__(self,config):
         self.config=config
-        self.mintor = config.monitor
+        selfmonitor = config.monitor
         self.delta=config.delta
         self.best_score = None
         self.counter = 0
         self.patience = config.patience
         self.early_stop = False
     def __call__(self, epoch,loss,acc, model,optimizer,scheduler,):
-        if self.mintor == 'val_acc':
+        if self.monitor == 'val_acc':
             if self.best_score is None :
                 self.best_score = acc
                 
@@ -167,7 +167,7 @@ class EarlyStop():
                 self.best_score = acc
                 self.counter = 0
                 self.save_checkpoint(model, optimizer, scheduler, epoch,loss)
-        elif self.mintor == 'val_loss':
+        elif self.monitor == 'val_loss':
             if self.best_score is None:
                 self.best_score = loss
                 self.save_checkpoint(model, optimizer, scheduler, epoch,loss)
