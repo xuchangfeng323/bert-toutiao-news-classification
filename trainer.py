@@ -90,9 +90,7 @@ class trainer:
                 if epoch==self.num_epochs-1:
                     self.metrics.add(predictions, labels)
         
-        results = self.metrics.get_results()
-        print(results)
-        self.metrics.reset()
+        
         avg_eval_loss = total_eval_loss / len(devdataLoader)
         eval_accuracy = eval_correct / total_samples  
         print(f"Eval Accuracy: {eval_accuracy:.4f}")
@@ -100,7 +98,7 @@ class trainer:
         swanlab.log({
             "eval/loss": avg_eval_loss,
             "eval/accuracy": eval_accuracy,
-            "eval/results": results
+            
         })
 
         
@@ -123,14 +121,8 @@ class trainer:
                 predictions = torch.argmax(logits, dim=-1)
                 test_correct += (predictions == labels).sum().item()
                 total_samples += labels.size(0)
-                self.metrics.add(predictions, labels)
-        results = self.metrics.get_results()
-        swanlab.log({
-            "test/results": results
-        })
-        print("Test Results:")
-        print(results)
-        self.metrics.reset()
+                
+        
         avg_test_loss = total_test_loss / len(testdataLoader)
         test_accuracy = test_correct / total_samples  
         print(f"Test Accuracy: {test_accuracy:.4f}")

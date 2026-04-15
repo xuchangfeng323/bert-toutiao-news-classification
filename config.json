@@ -1,6 +1,6 @@
 {
     "num_epochs": 10,
-    "batch_size": 16,
+    "batch_size": 64,
     "lr": 1e-6,
     "weight_decay": 0.01,
     "device": "cuda",
