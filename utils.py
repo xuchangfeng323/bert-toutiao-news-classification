@@ -179,6 +179,7 @@ class EarlyStop():
                 self.best_score = loss
                 self.counter = 0
                 self.save_checkpoint(model, optimizer, scheduler, epoch,loss)
+        return self.early_stop
         
     def save_checkpoint(self, model, optimizer, scheduler, epoch, dev_metrics):
         checkpoint_name = f"checkpoint_epoch_{epoch + 1}.pt"
