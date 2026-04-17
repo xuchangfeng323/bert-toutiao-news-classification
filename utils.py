@@ -205,19 +205,6 @@ if __name__ == '__main__':
     metrics1.add(preds1, labels1)
     results1 = metrics1.get_results()
     print(results1)
-        
-        
-
-
-        
-    
-    
-
-
-
-
-
-if __name__ == "__main__":    
     from ModelConfig import ModelConfig
     config = ModelConfig()
     train_dataLoader, dev_dataLoader, test_dataLoader = load_data(config)
@@ -225,3 +212,15 @@ if __name__ == "__main__":
         print(batch)
         break
         
+        
+
+
+        
+    
+    
+
+
+
+
+
+
