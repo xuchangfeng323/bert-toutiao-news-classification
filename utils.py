@@ -19,8 +19,6 @@ def load_data(config):
             data = json.load(f)
         label2id = data.get("label2id", {})
         id2label = data.get("id2label", {})
-        
-    
     df = pd.read_csv(config.data_path, delimiter='_!_', header=None,engine="python")
     labels = df.iloc[:, 1]
    
@@ -36,8 +34,8 @@ def load_data(config):
     test_dataset = ToutiaoDataset(test_data, test_labels,tokenizer,config.max_length)
     dev_dataset = ToutiaoDataset(dev_data, dev_labels,tokenizer,config.max_length)
     train_dataLoader = train_dataset.get_data_loader(batch_size=config.batch_size)
-    dev_dataLoader = dev_dataset.get_data_loader(batch_size=config.batch_size)
-    test_dataLoader = test_dataset.get_data_loader(batch_size=config.batch_size)
+    dev_dataLoader = dev_dataset.get_data_loader(batch_size=config.batch_size,shuffle=False)
+    test_dataLoader = test_dataset.get_data_loader(batch_size=config.batch_size,shuffle=False)
     return train_dataLoader, dev_dataLoader, test_dataLoader    
 
 
@@ -166,7 +164,7 @@ class EarlyStop():
             else:
                 self.best_score = acc
                 self.counter = 0
-                self.save_checkpoint(model, optimizer, scheduler, epoch,loss)
+                self.save_checkpoint(model, optimizer, scheduler, epoch,acc)
         elif self.monitor == 'val_loss':
             if self.best_score is None:
                 self.best_score = loss
