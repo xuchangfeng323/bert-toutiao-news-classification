@@ -3,6 +3,8 @@ from utils import EarlyStop
 import swanlab
 from tqdm import tqdm
 import torch
+from model import Bert4TextClassification
+from model import ModelConfig
 
 class trainer:
     def __init__(self,config):
@@ -144,6 +146,13 @@ class trainer:
             predictions = torch.argmax(logits, dim=-1)
             print(f"预测类别: {predictions.item()}")
             return predictions.item()
+if __name__ == "__main__":
+    config=ModelConfig("config.json")
+    model=Bert4TextClassification(config)
+    optimizer, scheduler = model.get_optimizer()
+    traindataLoader, devdataLoader, testdataLoader = load_data(config)
+    trainer=trainer(config)
+    trainer.train(traindataLoader, devdataLoader, testdataLoader, model, optimizer, scheduler)
 
         
         
