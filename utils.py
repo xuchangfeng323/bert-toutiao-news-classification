@@ -5,7 +5,7 @@ import pandas as pd
 from transformers import BertTokenizer
 import torch
 from MyDataset import ToutiaoDataset
-from ModelConfig import ModelConfig
+from arguments import ModelConfig
 import pandas as pd
 import torch
 from sklearn.model_selection import train_test_split
@@ -203,7 +203,7 @@ if __name__ == '__main__':
     metrics1.add(preds1, labels1)
     results1 = metrics1.get_results()
     print(results1)
-    from ModelConfig import ModelConfig
+    from arguments import ModelConfig
     config = ModelConfig()
     train_dataLoader, dev_dataLoader, test_dataLoader = load_data(config)
     for batch in train_dataLoader:
