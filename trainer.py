@@ -44,6 +44,7 @@ class trainer:
                 input_ids = input_ids.to(self.device)
                 attention_mask = attention_mask.to(self.device)
                 labels = labels.to(self.device)
+                
                 logits = self.model(input_ids, attention_mask)
                 loss=self.loss_fn(logits, labels)
                 loss.backward()

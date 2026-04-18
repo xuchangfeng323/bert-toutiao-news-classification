@@ -9,7 +9,7 @@
     "dropout_rate": 0.1,
     "embedding_dim": 768,
     "class_num": 15,
-    "data_path": "./data/toutiao_cat_data.txt",
+    "data_path": "./data/",
     "max_length": 128,
     "patience":3,
     "monitor": "val_acc",

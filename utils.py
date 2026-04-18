@@ -5,7 +5,7 @@ import pandas as pd
 from transformers import BertTokenizer
 import torch
 from MyDataset import ToutiaoDataset
-from arguments import ModelConfig
+from arguments import Arguments
 import pandas as pd
 import torch
 from sklearn.model_selection import train_test_split
@@ -13,30 +13,24 @@ import json
 
 
 def load_data(config):
-    
-    if config.label_mapping_path is not None:
-        with open(config.label_mapping_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        label2id = data.get("label2id", {})
-        id2label = data.get("id2label", {})
-    df = pd.read_csv(config.data_path, delimiter='_!_', header=None,engine="python")
-    labels = df.iloc[:, 1]
-   
-    texts = df.iloc[:, 3]
-    labels_clean = labels.astype(str).str.strip()
-    labels_new = labels_clean.map(lambda x: int(label2id[x])).values
-   
-    labels_list = labels_new.tolist()
-    tokenizer=BertTokenizer.from_pretrained(config.model_dir)
-    train_data, testanddev_data, train_labels, testanddev_labels = train_test_split(texts.tolist(), labels_list, test_size=0.3, random_state=42, stratify=labels_list)
-    test_data, dev_data, test_labels, dev_labels = train_test_split(testanddev_data, testanddev_labels, test_size=0.5, random_state=42, stratify=testanddev_labels)
-    train_dataset = ToutiaoDataset(train_data, train_labels,tokenizer,config.max_length)
-    test_dataset = ToutiaoDataset(test_data, test_labels,tokenizer,config.max_length)
-    dev_dataset = ToutiaoDataset(dev_data, dev_labels,tokenizer,config.max_length)
+    data_dir=config.data_path
+    df_train = pd.read_csv(os.path.join(data_dir, 'train.csv'))
+    df_test = pd.read_csv(os.path.join(data_dir, 'test.csv'))
+    df_dev = pd.read_csv(os.path.join(data_dir, 'dev.csv'))
+    train_data = df_train['text'].tolist()
+    train_labels = df_train['label'].tolist()
+    test_data = df_test['text'].tolist()
+    test_labels = df_test['label'].tolist()
+    dev_data = df_dev['text'].tolist()
+    dev_labels = df_dev['label'].tolist()
+    train_dataset = ToutiaoDataset(train_data, train_labels,config.max_length)
+    test_dataset = ToutiaoDataset(test_data, test_labels,config.max_length)
+    dev_dataset = ToutiaoDataset(dev_data, dev_labels,config.max_length)
+
     train_dataLoader = train_dataset.get_data_loader(batch_size=config.batch_size)
     dev_dataLoader = dev_dataset.get_data_loader(batch_size=config.batch_size,shuffle=False)
     test_dataLoader = test_dataset.get_data_loader(batch_size=config.batch_size,shuffle=False)
-    return train_dataLoader, dev_dataLoader, test_dataLoader    
+    return train_dataLoader, dev_dataLoader, test_dataLoader 
 
 
 class Metrics:
@@ -197,18 +191,12 @@ class EarlyStop():
         
 
 if __name__ == '__main__': 
-    metrics1 = Metrics(num_classes=3)
-    labels1 = torch.tensor([0, 0, 1, 1, 2, 2])
-    preds1  = torch.tensor([0, 1, 1, 1, 2, 0]) 
-    metrics1.add(preds1, labels1)
-    results1 = metrics1.get_results()
-    print(results1)
-    from arguments import ModelConfig
-    config = ModelConfig()
-    train_dataLoader, dev_dataLoader, test_dataLoader = load_data(config)
+    args = Arguments("arguments.json")
+    train_dataLoader, dev_dataLoader, test_dataLoader,train_df = load_data(args)
     for batch in train_dataLoader:
         print(batch)
         break
+    
         
         
 
