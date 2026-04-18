@@ -5,7 +5,7 @@ from tqdm import tqdm
 import torch
 from model import Bert4TextClassification
 from model import ModelConfig
-
+from utils import load_data
 class trainer:
     def __init__(self,config):
        
@@ -44,7 +44,7 @@ class trainer:
                 input_ids = input_ids.to(self.device)
                 attention_mask = attention_mask.to(self.device)
                 labels = labels.to(self.device)
-                
+
                 logits = self.model(input_ids, attention_mask)
                 loss=self.loss_fn(logits, labels)
                 loss.backward()

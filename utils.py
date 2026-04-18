@@ -23,14 +23,15 @@ def load_data(config):
     test_labels = df_test['label'].tolist()
     dev_data = df_dev['text'].tolist()
     dev_labels = df_dev['label'].tolist()
-    train_dataset = ToutiaoDataset(train_data, train_labels,config.max_length)
-    test_dataset = ToutiaoDataset(test_data, test_labels,config.max_length)
-    dev_dataset = ToutiaoDataset(dev_data, dev_labels,config.max_length)
+    tokenizer = BertTokenizer.from_pretrained(config.model_dir)
+    train_dataset = ToutiaoDataset(train_data, train_labels,tokenizer,config.max_length)
+    test_dataset = ToutiaoDataset(test_data, test_labels,tokenizer,config.max_length)
+    dev_dataset = ToutiaoDataset(dev_data, dev_labels,tokenizer,config.max_length)
 
     train_dataLoader = train_dataset.get_data_loader(batch_size=config.batch_size)
     dev_dataLoader = dev_dataset.get_data_loader(batch_size=config.batch_size,shuffle=False)
     test_dataLoader = test_dataset.get_data_loader(batch_size=config.batch_size,shuffle=False)
-    return train_dataLoader, dev_dataLoader, test_dataLoader 
+    return train_dataLoader, dev_dataLoader, test_dataLoader
 
 
 class Metrics:
@@ -192,7 +193,7 @@ class EarlyStop():
 
 if __name__ == '__main__': 
     args = Arguments("arguments.json")
-    train_dataLoader, dev_dataLoader, test_dataLoader,train_df = load_data(args)
+    train_dataLoader, dev_dataLoader, test_dataLoader = load_data(args)
     for batch in train_dataLoader:
         print(batch)
         break
