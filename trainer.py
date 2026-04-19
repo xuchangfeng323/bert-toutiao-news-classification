@@ -4,20 +4,24 @@ import swanlab
 from tqdm import tqdm
 import torch
 from model import Bert4TextClassification
-from model import ModelConfig
+from arguments import Arguments
 from utils import load_data
+import torch.nn as nn
+from utils import get_next,write_log
 class trainer:
     def __init__(self,config):
-       
         self.optimizer=None
         self.scheduler=None
         self.device=config.device
         self.num_epochs=config.num_epochs
         self.config=config
-        self.loss_fn = config.loss_fn
-        self.metrics = Metrics(num_classes=15)
+        self.loss_fn = nn.CrossEntropyLoss()
+        self.metrics = Metrics(num_classes=config.class_num)
         self.best_accuracy = 0.0
         self.early_stop = EarlyStop(config)
+        self.log_history = [] 
+        self.save_dir = get_next(config.save_dir)
+        self.log_dir=os.path.join(self.save_dir,"log.jsonl")
         
     def train(self,traindataLoader, devdataLoader, testdataLoader, model,optimizer, scheduler):
         self.optimizer=optimizer
@@ -34,6 +38,7 @@ class trainer:
                 "model": "bert-base-chinese"
             }
         )
+        write_log(self.log_dir, self.config.get_args_dict())
         for epoch in range(self.num_epochs):
             self.model.train()
             total_train_loss = 0
@@ -44,7 +49,6 @@ class trainer:
                 input_ids = input_ids.to(self.device)
                 attention_mask = attention_mask.to(self.device)
                 labels = labels.to(self.device)
-
                 logits = self.model(input_ids, attention_mask)
                 loss=self.loss_fn(logits, labels)
                 loss.backward()
@@ -60,7 +64,15 @@ class trainer:
             swanlab.log({
                 "train/loss_epoch": avg_train_loss
             }, step=epoch)
-            avg_eval_loss ,eval_accuracy = self.eval(epoch, devdataLoader)
+            avg_eval_loss ,eval_accuracy,results_dict = self.eval(epoch, devdataLoader)
+            log_dict = {
+                "epoch": epoch + 1,
+                "train/loss": avg_train_loss,
+                "eval/loss": avg_eval_loss,
+                "eval/accuracy": eval_accuracy,
+                "eval/results": results_dict
+            }
+            write_log(self.log_dir, log_dict)
             if self.scheduler is not None:
                 self.scheduler.step(avg_eval_loss)
             if self.early_stop(epoch,avg_eval_loss,eval_accuracy, model,optimizer,scheduler):
@@ -90,10 +102,11 @@ class trainer:
                 predictions = torch.argmax(logits, dim=-1)
                 eval_correct += (predictions == labels).sum().item()
                 total_samples += labels.size(0)
-                if epoch==self.num_epochs-1:
-                    self.metrics.add(predictions, labels)
-        
-        
+                self.metrics.add(predictions, labels)
+        results = self.metrics.get_results()
+        print(results)
+        results_dict = self.metrics.get_result_dict()
+        self.metrics.reset()
         avg_eval_loss = total_eval_loss / len(devdataLoader)
         eval_accuracy = eval_correct / total_samples  
         print(f"Eval Accuracy: {eval_accuracy:.4f}")
@@ -105,8 +118,10 @@ class trainer:
         })
 
         
-        return avg_eval_loss,eval_accuracy
+        return avg_eval_loss,eval_accuracy,results_dict
     def test(self, testdataLoader):
+        self.load_model(self.early_stop.best_model_path)
+        self.model.to(self.device)
         self.model.eval()
         total_test_loss = 0
         test_correct = 0
@@ -124,6 +139,17 @@ class trainer:
                 predictions = torch.argmax(logits, dim=-1)
                 test_correct += (predictions == labels).sum().item()
                 total_samples += labels.size(0)
+                self.metrics.add(predictions, labels)
+        results = self.metrics.get_results()
+        results_dict = self.metrics.get_result_dict()
+        self.metrics.reset()
+        log_dict = {
+            "epoch": epoch + 1,
+            "test/loss": avg_test_loss,
+            "test/accuracy": test_accuracy,
+            "test/results": results_dict
+        }
+        write_log(self.log_dir, log_dict)
                 
         
         avg_test_loss = total_test_loss / len(testdataLoader)
@@ -148,11 +174,11 @@ class trainer:
             print(f"预测类别: {predictions.item()}")
             return predictions.item()
 if __name__ == "__main__":
-    config=ModelConfig("config.json")
-    model=Bert4TextClassification(config)
+    args=Arguments("arguments.json")
+    model=Bert4TextClassification(args)
     optimizer, scheduler = model.get_optimizer()
-    traindataLoader, devdataLoader, testdataLoader = load_data(config)
-    trainer=trainer(config)
+    traindataLoader, devdataLoader, testdataLoader = load_data(args)
+    trainer=trainer(args)
     trainer.train(traindataLoader, devdataLoader, testdataLoader, model, optimizer, scheduler)
 
         

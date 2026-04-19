@@ -1,11 +1,10 @@
 {
     "num_epochs": 10,
     "batch_size": 64,
-    "lr": 1e-6,
+    "lr": 1e-5,
     "weight_decay": 0.01,
-    "device": "cuda",
+    "device": "cuda:0",
     "model_dir": "../bert-base-chinese",
-    "loss_fn": "cross_entropy",
     "dropout_rate": 0.1,
     "embedding_dim": 768,
     "class_num": 15,
@@ -14,9 +13,8 @@
     "patience":3,
     "monitor": "val_acc",
     "delta":0.01,
-    "model_save_path": "./checkpoints",
-    "label_mapping_path": "./data/label_mapping.json"
+    "save_dir": "./checkpoints"
     
-    
+ 
     
 }

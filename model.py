@@ -2,8 +2,8 @@ from transformers import BertModel
 import torch
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 dir="../bert-base-chinese"
+import torch.nn as nn
 
-from torch import nn
 class Bert4TextClassification(nn.Module):
     def __init__(self,config):
         super().__init__()
