@@ -7,7 +7,7 @@ import torch.nn as nn
 class Bert4TextClassification(nn.Module):
     def __init__(self,config):
         super().__init__()
-        self.learning_rate=config.learning_rate
+        self.lr=config.lr
         self.weight_decay=config.weight_decay
         self.bert = BertModel.from_pretrained(config.model_dir)
         self.dropout = nn.Dropout(config.dropout_rate)
@@ -19,6 +19,6 @@ class Bert4TextClassification(nn.Module):
         logits = self.fc(pooled_output)
         return logits
     def get_optimizer(self):
-        optimizer = torch.optim.AdamW(self.parameters(), lr=self.learning_rate, weight_decay=self.weight_decay)
+        optimizer = torch.optim.AdamW(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
         lr_scheduler = ReduceLROnPlateau(optimizer, patience=2, verbose=1, factor=0.1)
         return optimizer, lr_scheduler

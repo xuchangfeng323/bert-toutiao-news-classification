@@ -8,6 +8,8 @@ from arguments import Arguments
 from utils import load_data
 import torch.nn as nn
 from utils import get_next,write_log
+import os
+
 class trainer:
     def __init__(self,config):
         self.optimizer=None
@@ -18,9 +20,8 @@ class trainer:
         self.loss_fn = nn.CrossEntropyLoss()
         self.metrics = Metrics(num_classes=config.class_num)
         self.best_accuracy = 0.0
-        self.early_stop = EarlyStop(config)
-        self.log_history = [] 
         self.save_dir = get_next(config.save_dir)
+        self.early_stop = EarlyStop(config, self.save_dir)
         self.log_dir=os.path.join(self.save_dir,"log.jsonl")
         
     def train(self,traindataLoader, devdataLoader, testdataLoader, model,optimizer, scheduler):
@@ -33,12 +34,12 @@ class trainer:
             name="bert",                
             config={
                 "num_epochs": self.config.num_epochs,
-                "learning_rate": self.config.learning_rate,
+                "lr": self.config.lr,
                 "batch_size": self.config.batch_size,
                 "model": "bert-base-chinese"
             }
         )
-        write_log(self.log_dir, self.config.get_args_dict())
+        write_log(self.log_dir, {"config": self.config.get_args_dict()})
         for epoch in range(self.num_epochs):
             self.model.train()
             total_train_loss = 0

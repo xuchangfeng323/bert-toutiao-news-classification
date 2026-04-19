@@ -20,9 +20,12 @@ def get_next(prefix_dir):
         for file in os.listdir(prefix_dir):
             if file.startswith('exp'):
                 existing_nums.append(int(file[3:]))
-        next_num = max(existing_nums) + 1
-        os.makedirs(prefix_dir+'exp'+str(next_num))
-        return prefix_dir+'exp'+str(next_num)
+        if len(existing_nums) == 0:
+            next_num = 1
+        else:        
+            next_num = max(existing_nums) + 1
+        os.makedirs(prefix_dir+'/exp'+str(next_num))
+        return prefix_dir+'/exp'+str(next_num)
 
 
     
@@ -182,7 +185,7 @@ class Metrics:
         self.result_df = df
         return df
 class EarlyStop():
-    def __init__(self,config):
+    def __init__(self,config,save_dir=None):
         self.config=config
         self.monitor = config.monitor
         self.delta=config.delta
@@ -190,7 +193,7 @@ class EarlyStop():
         self.counter = 0
         self.patience = config.patience
         self.early_stop = False
-        self.save_dir = get_next(config.save_dir)
+        self.save_dir = save_dir
         
     def __call__(self, epoch,loss,acc, model,optimizer,scheduler,):
         if self.monitor == 'val_acc':
