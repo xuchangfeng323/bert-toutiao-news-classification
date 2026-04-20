@@ -1,6 +1,6 @@
 {
     "num_epochs": 10,
-    "batch_size": 64,
+    "batch_size": 16,
     "lr": 1e-5,
     "weight_decay": 0.01,
     "device": "cuda:0",
@@ -10,7 +10,7 @@
     "class_num": 15,
     "data_path": "./data/",
     "max_length": 128,
-    "patience":3,
+    "patience":2,
     "monitor": "val_acc",
     "delta":0.01,
     "save_dir": "./checkpoints"

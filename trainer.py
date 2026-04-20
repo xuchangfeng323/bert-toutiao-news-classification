@@ -121,8 +121,9 @@ class trainer:
         
         return avg_eval_loss,eval_accuracy,results_dict
     def test(self, testdataLoader):
-        self.load_model(self.early_stop.best_model_path)
-        self.model.to(self.device)
+        checkpoint = torch.load(self.early_stop.best_model_path)
+        self.model.load_state_dict(checkpoint["model"])  
+        self.model = self.model.to(self.device)
         self.model.eval()
         total_test_loss = 0
         test_correct = 0
@@ -143,37 +144,24 @@ class trainer:
                 self.metrics.add(predictions, labels)
         results = self.metrics.get_results()
         results_dict = self.metrics.get_result_dict()
-        self.metrics.reset()
-        log_dict = {
-            "epoch": epoch + 1,
-            "test/loss": avg_test_loss,
-            "test/accuracy": test_accuracy,
-            "test/results": results_dict
-        }
-        write_log(self.log_dir, log_dict)
-                
-        
         avg_test_loss = total_test_loss / len(testdataLoader)
         test_accuracy = test_correct / total_samples  
+        print(f"Test Accuracy: {test_accuracy:.4f}")
+        self.metrics.reset()
+        log_dict = {
+            "test/results": results_dict
+        }
+        write_log(self.log_dir, {"test": log_dict})
+                
+        
+        
         print(f"Test Accuracy: {test_accuracy:.4f}")
         swanlab.log({
             "test/loss": avg_test_loss,
             "test/accuracy": test_accuracy
         })
         
-    def predict(self, text,tokenizer,model_path=None):
-        if model_path is not None:
-            self.load_model(model_path)
-        if model_path is None:
-            return 
-        self.model.eval()
-        with torch.no_grad():
-            inputs = tokenizer(text, return_tensors="pt", padding=True, truncation=True, max_length=self.config.max_length)
-            inputs = {k: v.to(self.device) for k, v in inputs.items()}
-            logits = self.model(inputs['input_ids'], inputs['attention_mask'])
-            predictions = torch.argmax(logits, dim=-1)
-            print(f"预测类别: {predictions.item()}")
-            return predictions.item()
+
 if __name__ == "__main__":
     args=Arguments("arguments.json")
     model=Bert4TextClassification(args)

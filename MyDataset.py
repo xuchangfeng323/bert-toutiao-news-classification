@@ -1,5 +1,4 @@
 from torch.utils.data import Dataset
-import pandas as pd
 from transformers import BertTokenizer
 import torch
 from torch.utils.data import DataLoader

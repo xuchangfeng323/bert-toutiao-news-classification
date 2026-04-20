@@ -1,5 +1,4 @@
 import os
-
 from torch.utils.data import Dataset
 import pandas as pd
 from transformers import BertTokenizer
@@ -206,7 +205,7 @@ class EarlyStop():
             if acc-self.best_score  < self.delta:
                 self.counter += 1
                 self.save_checkpoint(model, optimizer, scheduler, epoch,acc,False)
-                if self.counter >= self.patience:
+                if self.counter > self.patience:
                     self.early_stop = True
             else:
                 self.best_score = acc
@@ -219,12 +218,12 @@ class EarlyStop():
             if self.best_score - loss > self.delta:
                 self.counter += 1
                 self.save_checkpoint(model, optimizer, scheduler, epoch,loss,False)
-                if self.counter >= self.patience:
+                if self.counter > self.patience:
                     self.early_stop = True
             else:
                 self.best_score = loss
                 self.counter = 0
-                self.save_checkpoint(model, optimizer, scheduler, epoch,loss)
+                self.save_checkpoint(model, optimizer, scheduler, epoch,loss,True)
         return self.early_stop
         
     def save_checkpoint(self, model, optimizer, scheduler, epoch, dev_metrics,is_best):
