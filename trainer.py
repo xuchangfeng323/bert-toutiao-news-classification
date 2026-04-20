@@ -111,7 +111,6 @@ class trainer:
         avg_eval_loss = total_eval_loss / len(devdataLoader)
         eval_accuracy = eval_correct / total_samples  
         print(f"Eval Accuracy: {eval_accuracy:.4f}")
-        
         swanlab.log({
             "eval/loss": avg_eval_loss,
             "eval/accuracy": eval_accuracy,

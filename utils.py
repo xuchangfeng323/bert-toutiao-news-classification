@@ -1,5 +1,5 @@
 import os
-from torch.utils.data import Dataset
+
 import pandas as pd
 from transformers import BertTokenizer
 import torch
@@ -170,17 +170,21 @@ class Metrics:
         r_list=[]
         f1_list=[]
         support_list = []
+
         for i in range(self.num_classes):
             p_list.append(self.precision(i))
             r_list.append(self.recall(i))
             f1_list.append(self.f1_score(i))
             support=sum(self.confusion_matrix[i])
             support_list.append(support)
+        micro_p = self.precision()      
+        micro_r = self.recall()         
+        micro_f1 = self.f1_score() 
         df=pd.DataFrame({'precision':p_list,'recall':r_list,'f1_score':f1_list,'support':support_list})
         df.loc['macro_avg'] = df[['precision', 'recall', 'f1_score']].mean()
         df.loc['macro_avg', 'support'] = float('nan')
-        df.loc['micro_avg'] = df[['precision', 'recall', 'f1_score']].mean()
-        df.loc['micro_avg', 'support'] = float('nan')
+        df.loc['micro_avg'] = [micro_p,micro_r,micro_f1,float('nan')]
+        
         self.result_df = df
         return df
 class EarlyStop():
