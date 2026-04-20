@@ -4,13 +4,13 @@ import swanlab
 from tqdm import tqdm
 import torch
 from model import Bert4TextClassification
-from arguments import Arguments
+
 from utils import load_data
 import torch.nn as nn
-from utils import get_next,write_log
+from utils import get_next,write_log,Arguments
 import os
 
-class trainer:
+class Trainer:
     def __init__(self,config):
         self.optimizer=None
         self.scheduler=None
@@ -162,11 +162,11 @@ class trainer:
         
 
 if __name__ == "__main__":
-    args=Arguments("arguments.json")
+    args=Arguments("./args/arg1.json")
     model=Bert4TextClassification(args)
     optimizer, scheduler = model.get_optimizer()
     traindataLoader, devdataLoader, testdataLoader = load_data(args)
-    trainer=trainer(args)
+    trainer=Trainer(args)
     trainer.train(traindataLoader, devdataLoader, testdataLoader, model, optimizer, scheduler)
 
         

@@ -4,7 +4,7 @@ import pandas as pd
 from transformers import BertTokenizer
 import torch
 from MyDataset import ToutiaoDataset
-from arguments import Arguments
+
 import pandas as pd
 import torch
 from sklearn.model_selection import train_test_split
@@ -219,7 +219,7 @@ class EarlyStop():
             if self.best_score is None:
                 self.best_score = loss
                 self.save_checkpoint(model, optimizer, scheduler, epoch,loss,True)
-            if self.best_score - loss > self.delta:
+            if self.best_score - loss  < self.delta:
                 self.counter += 1
                 self.save_checkpoint(model, optimizer, scheduler, epoch,loss,False)
                 if self.counter > self.patience:
@@ -244,7 +244,19 @@ class EarlyStop():
         if is_best:
             self.best_model_path = checkpoint_path
             print(f"更新最佳模型: {checkpoint_path} (监控指标 '{self.monitor}' = {dev_metrics:.6f})")
-            
+class Arguments:
+    def __init__(self, config_path="arguments.json"):
+        self.args_dict = self._load_json_config(config_path)
+        for key, value in self.args_dict.items():
+            setattr(self, key, value)
+        
+    def _load_json_config(self, config_path):
+        if os.path.exists(config_path):
+            with open(config_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        return {}
+    def get_args_dict(self):
+        return self.args_dict           
     
         
 
