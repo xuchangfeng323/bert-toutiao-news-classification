@@ -14,7 +14,7 @@
     "monitor": "val_acc",
     "delta":0.001,
     "save_dir": "./checkpoints",
-    "use_keywords": false
+    "use_keywords": true
     
  
     

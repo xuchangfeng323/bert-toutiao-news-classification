@@ -151,18 +151,12 @@ class Trainer:
             "test/results": results_dict
         }
         write_log(self.log_dir, {"test": log_dict})
-                
-        
-        
-        print(f"Test Accuracy: {test_accuracy:.4f}")
         swanlab.log({
             "test/loss": avg_test_loss,
             "test/accuracy": test_accuracy
         })
-        
-
 if __name__ == "__main__":
-    args=Arguments("./args/arg1.json")
+    args=Arguments("./args/args2.json")
     model=Bert4TextClassification(args)
     optimizer, scheduler = model.get_optimizer()
     traindataLoader, devdataLoader, testdataLoader = load_data(args)

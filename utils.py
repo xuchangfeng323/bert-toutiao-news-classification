@@ -1,11 +1,7 @@
 import os
-
 import pandas as pd
 from transformers import BertTokenizer
-import torch
 from MyDataset import ToutiaoDataset
-
-import pandas as pd
 import torch
 from sklearn.model_selection import train_test_split
 import json
@@ -26,23 +22,44 @@ def get_next(prefix_dir):
         os.makedirs(prefix_dir+'/exp'+str(next_num))
         return prefix_dir+'/exp'+str(next_num)
 
+def build_label_mappings(labels, save_path=None):
+    unique_labels = sorted(set(labels))
+    label2id = {label: i for i, label in enumerate(unique_labels)}
+    id2label = {i: label for label, i in label2id.items()}
+    
+    if save_path:
+        mappings = {"label2id": label2id, "id2label": id2label}
+        with open(save_path, "w", encoding="utf-8") as f:
+            json.dump(mappings, f, ensure_ascii=False, indent=4)
+        print(f"Label mappings saved to {save_path}")
+    
+    return label2id, id2label
 
     
 def load_data(config):
     data_dir=config.data_path
-    df_train = pd.read_csv(os.path.join(data_dir, 'train.csv'))
-    df_test = pd.read_csv(os.path.join(data_dir, 'test.csv'))
-    df_dev = pd.read_csv(os.path.join(data_dir, 'dev.csv'))
-    train_data = df_train['text'].tolist()
+    headers=[
+    "id",
+    "label",
+    "channel",
+    "title",
+    "keywords"
+]
+    df_train = pd.read_csv(os.path.join(data_dir, 'train_3k.txt'),sep='_!_', header=None, names=headers)
+    df_test = pd.read_csv(os.path.join(data_dir, 'test_1k.txt'),sep='_!_', header=None, names=headers)
+    df_dev = pd.read_csv(os.path.join(data_dir, 'dev_1k.txt'),sep='_!_', header=None, names=headers)
     train_labels = df_train['label'].tolist()
-    test_data = df_test['text'].tolist()
-    test_labels = df_test['label'].tolist()
-    dev_data = df_dev['text'].tolist()
-    dev_labels = df_dev['label'].tolist()
+    label2id, id2label = build_label_mappings(train_labels, save_path=os.path.join(data_dir, 'label2id.json'))
+    df_train['label_id'] = df_train['label'].map(label2id)
+    df_dev['label_id'] = df_dev['label'].map(label2id)
+    df_test['label_id'] = df_test['label'].map(label2id)
+    train_data=df_train.to_dict(orient='dict')
+    dev_data=df_dev.to_dict(orient='dict')
+    test_data=df_test.to_dict(orient='dict')
     tokenizer = BertTokenizer.from_pretrained(config.model_dir)
-    train_dataset = ToutiaoDataset(train_data, train_labels,tokenizer,config.max_length)
-    test_dataset = ToutiaoDataset(test_data, test_labels,tokenizer,config.max_length)
-    dev_dataset = ToutiaoDataset(dev_data, dev_labels,tokenizer,config.max_length)
+    train_dataset = ToutiaoDataset(train_data,tokenizer,config.max_length,config.use_keywords)
+    test_dataset = ToutiaoDataset(test_data,tokenizer,config.max_length,config.use_keywords)
+    dev_dataset = ToutiaoDataset(dev_data,tokenizer,config.max_length,config.use_keywords)
 
     train_dataLoader = train_dataset.get_data_loader(batch_size=config.batch_size)
     dev_dataLoader = dev_dataset.get_data_loader(batch_size=config.batch_size,shuffle=False)
