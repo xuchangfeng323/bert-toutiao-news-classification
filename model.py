@@ -1,13 +1,13 @@
-from transformers import BertModel
+from transformers import BertModel, get_linear_schedule_with_warmup
 import torch
-from torch.optim.lr_scheduler import ReduceLROnPlateau
 from utils import Arguments
 import torch.nn as nn
 
 class Bert4TextClassification(nn.Module):
-    def __init__(self,config):
+    def __init__(self,config:Arguments):
         super().__init__()
-        self.lr=config.lr
+        self.bert_lr=config.bert_lr
+        self.fc_lr=config.fc_lr
         self.weight_decay=config.weight_decay
         self.bert = BertModel.from_pretrained(config.model_dir)
         self.dropout = nn.Dropout(config.dropout_rate)
@@ -18,7 +18,14 @@ class Bert4TextClassification(nn.Module):
         pooled_output = self.dropout(pooled_output)
         logits = self.fc(pooled_output)
         return logits
-    def get_optimizer(self):
-        optimizer = torch.optim.AdamW(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
-        lr_scheduler = ReduceLROnPlateau(optimizer, patience=2, verbose=1, factor=0.1)
+    def get_optimizer(self, num_training_steps, num_warmup_steps=0):
+        optimizer = torch.optim.AdamW([
+            {'params': self.bert.parameters(), 'lr': self.bert_lr},
+            {'params': self.fc.parameters(), 'lr': self.fc_lr}
+        ], weight_decay=self.weight_decay)
+        lr_scheduler = get_linear_schedule_with_warmup(
+            optimizer,
+            num_warmup_steps=num_warmup_steps,
+            num_training_steps=num_training_steps
+        )
         return optimizer, lr_scheduler

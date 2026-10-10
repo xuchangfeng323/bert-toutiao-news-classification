@@ -34,7 +34,8 @@ class Trainer:
             name="bert",                
             config={
                 "num_epochs": self.config.num_epochs,
-                "lr": self.config.lr,
+                "bert_lr": self.config.bert_lr,
+                "fc_lr": self.config.fc_lr,
                 "batch_size": self.config.batch_size,
                 "model": "bert-base-chinese"
             }
@@ -54,6 +55,7 @@ class Trainer:
                 loss=self.loss_fn(logits, labels)
                 loss.backward()
                 self.optimizer.step()
+                self.scheduler.step()
                 total_train_loss += loss.item()
                 progress_bar.set_postfix({"Loss": loss.item()})
                 if step % 50 == 0:
@@ -74,8 +76,6 @@ class Trainer:
                 "eval/results": results_dict
             }
             write_log(self.log_dir, log_dict)
-            if self.scheduler is not None:
-                self.scheduler.step(avg_eval_loss)
             if self.early_stop(epoch,avg_eval_loss,eval_accuracy, model,optimizer,scheduler):
                 break
 
@@ -156,10 +156,12 @@ class Trainer:
             "test/accuracy": test_accuracy
         })
 if __name__ == "__main__":
-    args=Arguments("./args/args2.json")
+    args=Arguments("args/arg1.json")
     model=Bert4TextClassification(args)
-    optimizer, scheduler = model.get_optimizer()
     traindataLoader, devdataLoader, testdataLoader = load_data(args)
+    num_training_steps = args.num_epochs * len(traindataLoader)
+    num_warmup_steps = int(num_training_steps * getattr(args, "warmup_ratio", 0.0))
+    optimizer, scheduler = model.get_optimizer(num_training_steps, num_warmup_steps)
     trainer=Trainer(args)
     trainer.train(traindataLoader, devdataLoader, testdataLoader, model, optimizer, scheduler)
 

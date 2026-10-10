@@ -1,7 +1,8 @@
 {
     "num_epochs": 20,
     "batch_size": 16,
-    "lr": 1e-6,
+    "bert_lr": 3e-5,
+    "fc_lr": 3e-3,
     "weight_decay": 0.01,
     "device": "cuda:0",
     "model_dir": "../bert-base-chinese",
@@ -11,6 +12,7 @@
     "data_path": "./data/",
     "max_length": 128,
     "patience":10,
+    "warmup_ratio": 0.1,
     "monitor": "val_acc",
     "delta":0.001,
     "save_dir": "./checkpoints",
